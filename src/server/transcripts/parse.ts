@@ -51,11 +51,14 @@ function clean(text: string) {
     .trim();
 }
 
+const HEADER_LABELS = /^(participantes|participants|attendees|convidados|t[ií]tulo|title|data|date|transcri[cç][aã]o|transcript|resumo|summary|observa[cç][aã]o|obs|nota|note)$/i;
+
 /** "Nome Sobrenome: texto" → [nome, texto]. Evita confundir "Obs: ..." longo ou horários. */
 function splitSpeaker(line: string): [string | null, string] {
   const m = /^([^:\n]{1,60}?):\s+(.+)$/.exec(line);
   if (!m) return [null, line];
   const name = m[1].trim();
+  if (HEADER_LABELS.test(name)) return [null, line];
   if (/^\d/.test(name) || name.split(/\s+/).length > 6 || /https?$/i.test(name)) return [null, line];
   return [name, m[2]];
 }
@@ -116,6 +119,8 @@ function parseLines(raw: string): { segs: ParsedSegment[]; precision: "approxima
   type Pending = { speaker: string | null; text: string; anchorMs: number | null };
   const items: Pending[] = [];
   let anchor: number | null = null;
+  // Documentos do Meet têm cabeçalho (título, participantes) antes da primeira marcação de tempo.
+  const hasTimeLines = lines.some((l) => TIME_LINE.test(l));
   let sawTimeLine = false;
   for (const line of lines) {
     const t = TIME_LINE.exec(line);
@@ -124,6 +129,7 @@ function parseLines(raw: string): { segs: ParsedSegment[]; precision: "approxima
       sawTimeLine = true;
       continue;
     }
+    if (hasTimeLines && !sawTimeLine) continue;
     const text = clean(line);
     if (!text) continue;
     const [speaker, body] = splitSpeaker(text);
