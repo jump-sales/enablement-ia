@@ -203,7 +203,11 @@ export function parseTranscriptText(fileName: string, text: string): ParsedTrans
     segs = r.segs;
     format = r.format;
     precision = r.precision;
-    if (precision !== "exact") warnings.push("Os horários de cada fala são estimados a partir das marcações do documento.");
+    warnings.push(
+      precision === "approximate"
+        ? "Os horários de cada fala são estimados a partir das marcações do documento."
+        : "O arquivo não traz horários; os tempos das falas são estimados.",
+    );
   }
 
   segs = mergeSameSpeaker(segs.filter((s) => s.text.length > 0)).sort((a, b) => a.startMs - b.startMs);
