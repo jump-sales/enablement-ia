@@ -145,7 +145,14 @@ async function requestEvaluationTx(tx: Tx, ctx: { orgId: string }, conversationI
 
 export type UploadedFile = { name: string; data: Buffer };
 
-export async function createConversationFromTranscript(ctx: ServiceCtx, rawInput: unknown, file: UploadedFile) {
+export type ConversationOrigin = { source: "transcript_upload" | "google_drive"; externalRef?: string | null };
+
+export async function createConversationFromTranscript(
+  ctx: ServiceCtx,
+  rawInput: unknown,
+  file: UploadedFile,
+  origin: ConversationOrigin = { source: "transcript_upload" },
+) {
   assertCan(ctx.role, "conversation.upload");
   const input = createConversationInput.parse(rawInput);
   if (input.ownerUserId !== ctx.userId) assertCan(ctx.role, "conversation.upload_for_others");
@@ -183,6 +190,13 @@ export async function createConversationFromTranscript(ctx: ServiceCtx, rawInput
       .from(mediaAssets)
       .where(and(eq(mediaAssets.sha256, sha256), isNull(mediaAssets.deletedAt)));
     if (dup.length) throw conflict("Esta transcrição já foi enviada.", "duplicate");
+    if (origin.externalRef) {
+      const imported = await tx
+        .select({ id: conversations.id })
+        .from(conversations)
+        .where(and(eq(conversations.externalRef, origin.externalRef), isNull(conversations.deletedAt)));
+      if (imported.length) throw conflict("Este arquivo do Google Drive já foi importado.", "duplicate");
+    }
 
     const roles = guessRoles(parsed, owner.name);
     await tx.insert(conversations).values({
@@ -193,7 +207,8 @@ export async function createConversationFromTranscript(ctx: ServiceCtx, rawInput
       uploadedBy: ctx.userId,
       title: input.title,
       type: input.type,
-      source: "transcript_upload",
+      source: origin.source,
+      externalRef: origin.externalRef ?? null,
       rubricId: input.rubricId,
       occurredAt: input.occurredAt ?? null,
       durationMs: parsed.durationMs,
@@ -274,7 +289,7 @@ export async function createConversationFromTranscript(ctx: ServiceCtx, rawInput
       action: "conversation.created",
       targetType: "conversation",
       targetId: conversationId,
-      metadata: { source: "transcript_upload", format: parsed.format, segments: parsed.segments.length },
+      metadata: { source: origin.source, format: parsed.format, segments: parsed.segments.length },
     });
     return { evaluationId, needsReview: roles.needsReview };
   });
