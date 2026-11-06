@@ -1,0 +1,52 @@
+{
+  "name": "jump-sales-enablement-ai",
+  "version": "0.1.0",
+  "description": "JUMP Sales Enablement AI — avaliação e coaching de conversas comerciais",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "worker": "tsx --env-file=.env worker/index.ts",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "tsx --env-file=.env scripts/migrate.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "plan:grant": "tsx --env-file=.env scripts/grant-plan.ts"
+  },
+  "author": "",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.6.0",
+    "@aws-sdk/client-s3": "^3.1163.0",
+    "@aws-sdk/lib-storage": "^3.1163.0",
+    "@aws-sdk/s3-request-presigner": "^3.1163.0",
+    "better-auth": "^1.7.18",
+    "drizzle-orm": "^0.45.4",
+    "next": "^16.4.5",
+    "pg": "^8.23.1",
+    "pg-boss": "^12.38.1",
+    "pino": "^10.4.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.4",
+    "@types/node": "^26.6.6",
+    "@types/pg": "^8.23.1",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "drizzle-kit": "^0.31.11",
+    "eslint": "^10.14.0",
+    "postcss": "^8.5.32",
+    "tailwindcss": "^4.3.4",
+    "tsx": "^4.23.15",
+    "typescript": "5.9",
+    "vitest": "^5.1.0"
+  },
+  "private": true,
+  "engines": {
+    "node": ">=22"
+  }
+}

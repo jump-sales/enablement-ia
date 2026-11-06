@@ -1,0 +1,53 @@
+# Produção em VPS (Hostinger KVM ou similar). Ver docs/DEPLOY.md.
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_SUPERUSER_PASSWORD:?defina no .env}
+      JUMP_OWNER_PASSWORD: ${JUMP_OWNER_PASSWORD:?}
+      JUMP_APP_PASSWORD: ${JUMP_APP_PASSWORD:?}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init-db.sh:/docker-entrypoint-initdb.d/10-init.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      retries: 10
+    # Sem porta exposta: acessível só pela rede interna do compose.
+
+  migrate:
+    build: { context: .., target: ops }
+    env_file: .env
+    environment:
+      DATABASE_OWNER_URL: postgres://jump_owner:${JUMP_OWNER_PASSWORD}@db:5432/jump
+    depends_on: { db: { condition: service_healthy } }
+    restart: "no"
+
+  web:
+    build: { context: .., target: web }
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: postgres://jump_app:${JUMP_APP_PASSWORD}@db:5432/jump
+      NODE_ENV: production
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+    volumes:
+      - media:/app/var/storage
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports: ["80:80", "443:443"]
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN:?}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+    depends_on: [web]
+
+volumes:
+  pgdata:
+  media:
+  caddy_data:

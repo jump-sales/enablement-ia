@@ -1,0 +1,12 @@
+{$APP_DOMAIN} {
+	encode zstd gzip
+	# Uploads de gravações de até ~2 GB
+	request_body {
+		max_size 2GB
+	}
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		-Server
+	}
+	reverse_proxy web:3000
+}

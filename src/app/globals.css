@@ -1,0 +1,20 @@
+@import "tailwindcss";
+
+/* Identidade Jump Sales. Laranja só em fundo com texto azul-escuro (contraste AA ≈ 6,7:1). */
+@theme {
+  --color-navy: #0b1f3a;
+  --color-navy-800: #132c4f;
+  --color-navy-700: #1d3a63;
+  --color-orange: #ff7a00;
+  --color-orange-600: #e06b00;
+  --color-orange-text: #b35400; /* laranja escurecido para texto sobre branco (AA) */
+  --color-surface: #f6f7f9;
+  --color-line: #e3e6eb;
+  --color-ink: #0b1f3a;
+  --color-muted: #5b6676;
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+html { color: var(--color-ink); background: var(--color-surface); }
+body { min-height: 100dvh; }
+:focus-visible { outline: 2px solid var(--color-orange); outline-offset: 2px; }
