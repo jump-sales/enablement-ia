@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { monthLabel } from "@/lib/format";
 
 /* Cores validadas (scripts/validate_palette.js do guia de visualização):
  * - série única: #2a78d6 (passa banda de luminosidade, croma e contraste)
@@ -10,11 +11,6 @@ const CUR = "#1c5cab";
 const GRID = "#e3e6eb";
 const INK_MUTED = "#5b6676";
 
-const MONTHS = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
-export const monthLabel = (ym: string) => {
-  const [y, m] = ym.split("-");
-  return `${MONTHS[Number(m) - 1]}/${y.slice(2)}`;
-};
 const fmt = (v: number | null) => (v === null ? "—" : v.toLocaleString("pt-BR", { maximumFractionDigits: 1 }));
 
 export type TrendPoint = { month: string; avg: number | null; count: number };

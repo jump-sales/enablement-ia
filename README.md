@@ -2,7 +2,7 @@
 
 Plataforma SaaS B2B multiempresa que avalia ligações e videochamadas comerciais a partir de gravações, gera feedback fundamentado em evidências e acompanha a evolução de SDRs e Closers ao longo do tempo.
 
-> **Status:** Etapas B (Fundação) e C (Pipeline de análise) concluídas e testadas. A avaliação usa um **motor simulado** até a chave de IA ser configurada (`LLM_PROVIDER=anthropic` + `ANTHROPIC_API_KEY`). Veja [docs/BACKLOG.md](docs/BACKLOG.md).
+> **Status:** Etapas B (Fundação), C (Pipeline de análise) e D (Gestão: revisão, versões, calibração, painéis, coaching) concluídas e testadas. A avaliação usa um **motor simulado** até a chave de IA ser configurada (`LLM_PROVIDER=anthropic` + `ANTHROPIC_API_KEY`). Veja [docs/BACKLOG.md](docs/BACKLOG.md).
 
 Fluxo: o vendedor ou o gestor envia a **transcrição** que o Meet, o Zoom ou o Teams já geram → o sistema identifica quem é o vendedor → avalia pela metodologia da empresa → mostra a nota, as evidências com horário e o feedback.
 

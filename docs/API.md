@@ -56,7 +56,24 @@ Base: `/api/v1`. JSON em UTF-8. Autenticação por cookie de sessão (Better Aut
 | `POST /conversations/:id/reprocess` | `evaluation.reprocess` | nova avaliação (a anterior fica no histórico) |
 | `DELETE /conversations/:id` | `conversation.delete` | exclusão definitiva (arquivo + transcrição + avaliações), auditada |
 
-## Planejado (Etapa D e integrações)
+## Implementado (Etapa D)
+
+| Método e rota | Permissão | Descrição |
+|---|---|---|
+| `PATCH /evaluations/:id/criteria/:cid` | `evaluation.review` | `{status, score?, reason, contest?}`; preserva a nota da IA e recalcula a nota geral |
+| `PATCH /evaluations/:id/evidence/:eid` | `evaluation.review` | `{falsePositive, reason}` |
+| `POST /evaluations/:id/comments` | `evaluation.review` | `{body}` |
+| `POST /evaluations/:id/approve` | `evaluation.review` | aprova a avaliação vigente |
+| `GET /dashboard?userId` | membro (vendedor: só o próprio) | tendência mensal, competências, pessoas, recorrentes, pendências, custo |
+| `GET /methodologies/:id` | membro | versão vigente, rascunho e histórico de versões |
+| `POST /methodologies/:id/draft` | `methodology.manage` | cria (ou reaproveita) rascunho |
+| `PUT /rubric-versions/:id` · `DELETE` | `methodology.manage` | salva / descarta rascunho (recusa versão publicada: `version_published`) |
+| `POST /rubric-versions/:id/publish` | `methodology.manage` | publica; a anterior é arquivada |
+| `GET /calibration` | `calibration.manage` | concordância IA × gestor |
+| `GET/POST /calibration/:conversationId` | `calibration.manage` + plano Treinamento | formulário / envio da referência (`402 feature_not_in_plan` sem o plano) |
+| `GET/POST /coaching` · `PATCH /coaching/:id` | ver / `coaching.assign` / dono | ações de desenvolvimento |
+
+## Planejado (integrações)
 
 | Método e rota | Descrição |
 |---|---|

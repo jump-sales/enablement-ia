@@ -37,14 +37,18 @@ Mudança de rumo: entrada pela **transcrição pronta** do Meet/Zoom/Teams ([ADR
 - ⏳ Job de retenção automática (apagar após N dias)
 - ⏳ Upload de áudio/vídeo + transcrição própria (só para clientes sem transcrição da plataforma)
 
-## Etapa D — Gestão ⏳
+## Etapa D — Gestão ✅
 
-- ⏳ Templates editáveis: SPIN, Challenger, Consultiva, SDR Qualification, Closer Discovery
-- ⏳ Editor de metodologia (critérios, âncoras, pesos, obrigatórios, aplicabilidade, limiares), versões com publicação imutável
-- ⏳ Revisão humana: ajuste, contestação, falso positivo, comentários, aprovação, reprocessamento, histórico
-- ⏳ **Calibração por empresa:** gestor avalia conversas de referência → concordância IA × gestor por critério → ajuste das âncoras
-- ⏳ Dashboards: evolução mensal individual (vendedor) e por time/pessoa (gestor), melhorias recorrentes, pendências, custo por análise
-- ⏳ Planos de coaching (Treinamento)
+- ✅ Editor de metodologia: rascunho a partir da versão vigente, critérios, âncoras 0/meio/máximo, pesos, obrigatórios, aplicabilidade, escala (5/10/100), faixas de classificação, cobertura mínima, orientações; publicação de nova versão
+- ✅ Versão publicada imutável **garantida no banco** (trigger), não só na aplicação; avaliações antigas permanecem na versão original
+- ✅ Revisão humana: ajuste de nota/situação com motivo obrigatório, contestação, falso positivo em evidência, comentários, aprovação; nota da IA preservada; nota geral recalculada; histórico imutável
+- ✅ Política "aprovação do gestor antes de o vendedor ver" aplicada na lista, no detalhe e nos painéis
+- ✅ Calibração por empresa: gestor avalia sem ver a nota da IA; concordância por critério contra a nota ORIGINAL da IA (tolerância de 10% da escala)
+- ✅ Painéis: nota média mês a mês (6 meses), competências mês atual × anterior, pessoas comparadas consigo mesmas (sem ranking), melhorias recorrentes, revisões pendentes, custo por análise
+- ✅ Planos de coaching: gestor cria a partir do critério; vendedor acompanha e atualiza o andamento (RLS próprio)
+- ✅ Recursos do plano Treinamento (evolução, coaching, calibração) bloqueados sem a assinatura
+- ⏳ Editar aplicabilidade/âncoras intermediárias além de 0/meio/máximo; duplicar metodologia
+- ⏳ Exportação (CSV/PDF) dos painéis
 
 ## Etapa E — Validação ⏳
 

@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { CompetencyBars, monthLabel, TrendChart } from "@/components/charts";
+import { CompetencyBars, TrendChart } from "@/components/charts";
+import { monthLabel } from "@/lib/format";
 import { Badge, Card, JOB_LABEL, PageHeader } from "@/components/ui";
 import { can } from "@/server/authz";
 import { pageContext } from "@/server/page-context";
@@ -153,7 +154,12 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         {d.evolutionEnabled && (
           <Card
             title={personId ? "Plano de desenvolvimento" : teamView ? "Ações de coaching da equipe" : "Seu plano de desenvolvimento"}
-            actions={teamView ? <Badge>{coaching.filter((a) => a.status !== "done" && a.status !== "dismissed").length} abertas</Badge> : undefined}
+            actions={
+              teamView ? (() => {
+                const open = coaching.filter((a) => a.status !== "done" && a.status !== "dismissed").length;
+                return <Badge>{open} {open === 1 ? "aberta" : "abertas"}</Badge>;
+              })() : undefined
+            }
           >
             <CoachingList
               actions={JSON.parse(JSON.stringify(teamView && !personId ? coaching : myActions))}

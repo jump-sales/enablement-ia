@@ -40,11 +40,11 @@ A regra "vendedor só vê o próprio" é aplicada no banco de dados (RLS), não 
 2. **Upload** de áudio/vídeo com validação de formato, duração (10 s a 2 h), tamanho e integridade. Extração de áudio de vídeos. *(C)*
 3. **Transcrição** com idioma, timestamps, separação de falantes quando disponível, correção manual de falantes, estados, retentativas e indicadores de qualidade. *(C)*
 4. **Motor de avaliação** por rubrica da empresa, com templates editáveis: SPIN, Challenger, Consultiva, Qualificação SDR e Discovery Closer. *(C)*
-5. **Scorecard configurável e versionado:** competências, critérios, descrições comportamentais, pesos, escala, aplicabilidade, critérios obrigatórios, limiares e orientações ao avaliador. *(D)*
+5. **Scorecard configurável e versionado:** competências, critérios, descrições comportamentais, pesos, escala, aplicabilidade, critérios obrigatórios, limiares e orientações ao avaliador. *(D: concluída)*
 6. **Feedback estruturado** *(C: concluído)*: resumo, objetivo, pontos fortes, melhorias, evidências com timestamp, objeções e tratamentos, qualidade da investigação, próximos passos, perguntas sugeridas (sinalizadas como hipotéticas), recomendações e notas. *(C)*
-7. **Dashboard:** conversas avaliadas, média por competência, evolução temporal, comparação individual e de time (sem ranking punitivo), melhorias recorrentes, pendências, custo por análise e consumo mensal. *(D)*
-8. **Revisão humana:** ajustar notas, contestar critérios, corrigir evidências, comentar, aprovar, marcar falsos positivos e reprocessar, com histórico preservado. *(D)*
-9. **Calibração por empresa:** o gestor avalia conversas de referência; o sistema mede a concordância da IA com ele. *(D)*
+7. **Dashboard:** conversas avaliadas, média por competência, evolução temporal, comparação individual e de time (sem ranking punitivo), melhorias recorrentes, pendências, custo por análise e consumo mensal. *(D: concluída)*
+8. **Revisão humana:** ajustar notas, contestar critérios, corrigir evidências, comentar, aprovar, marcar falsos positivos e reprocessar, com histórico preservado. *(D: concluída)*
+9. **Calibração por empresa:** o gestor avalia conversas de referência; o sistema mede a concordância da IA com ele. *(D: concluída)*
 
 ### Fora do MVP
 - Upload de áudio/vídeo com transcrição própria (backlog; só para clientes sem transcrição da plataforma).
@@ -76,7 +76,7 @@ A regra "vendedor só vê o próprio" é aplicada no banco de dados (RLS), não 
 | 6 | Débito de crédito idempotente; bloqueio ao atingir o teto de custo | ✅ testado |
 | 7 | 100% das evidências exibidas apontam para um segmento existente, com citação verificada e timestamp válido | ✅ testado |
 | 8 | Nota geral confere com o cálculo determinístico; "não avaliável" não vira zero | ✅ testado |
-| 9 | Mudar a rubrica não altera avaliações antigas | Etapa D |
+| 9 | Mudar a rubrica não altera avaliações antigas | ✅ testado (inclusive no banco) |
 | 10 | Job duplicado não gera avaliação duplicada; falhas são retentadas com backoff | ✅ testado |
 | 11 | Nenhum caso da suíte de prompt injection altera a nota | ✅ testado com o motor simulado (defesas de prompt e de validação); falta repetir com o modelo real |
 | 12 | Excluir uma conversa remove mídia, transcrição e avaliação, e fica registrado | ✅ testado |
