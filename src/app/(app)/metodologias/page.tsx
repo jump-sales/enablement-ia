@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Badge, Card, PageHeader } from "@/components/ui";
 import { can } from "@/server/authz";
 import { pageContext } from "@/server/page-context";
@@ -33,7 +34,11 @@ export default async function MethodologiesPage() {
             key={r.id}
             title={r.name}
             description={`Aplica-se a ${APPLIES[r.appliesTo]} · versão ${r.version?.version ?? "—"} · escala ${r.version?.scaleMin ?? 0}–${r.version?.scaleMax ?? 10}`}
-            actions={<Badge tone="success">Publicada</Badge>}
+            actions={
+              <Link href={`/metodologias/${r.id}`} className="inline-flex items-center rounded-md border border-line bg-white px-3 py-1.5 text-sm font-semibold text-navy hover:bg-surface">
+                {manage ? "Editar" : "Ver detalhes"}
+              </Link>
+            }
           >
             <div className="-mx-5 overflow-x-auto">
               <table className="w-full min-w-[720px] text-left text-sm">
@@ -67,7 +72,6 @@ export default async function MethodologiesPage() {
                 </tbody>
               </table>
             </div>
-            <p className="mt-3 text-xs text-muted">A edição dos critérios e a calibração com avaliações do gestor chegam na próxima etapa.</p>
           </Card>
         ))}
 
