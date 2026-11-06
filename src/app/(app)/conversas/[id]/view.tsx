@@ -9,9 +9,9 @@ import { fmtTime } from "@/server/ai/format";
 
 type Seg = { id: string; idx: number; startMs: number; endMs: number; speakerLabel: string | null; text: string };
 type Part = { id: string; speakerLabel: string; role: string; assignedBy: string };
-type Evidence = { id: string; criterionScoreId: string | null; segmentId: string | null; quote: string; startMs: number | null };
+type Evidence = { id: string; criterionScoreId: string | null; segmentId: string | null; quote: string; startMs: number | null; flaggedFalsePositive: boolean };
 type Score = {
-  s: { id: string; status: string; score: string | null; justification: string | null; confidence: string | null };
+  s: { id: string; status: string; score: string | null; justification: string | null; confidence: string | null; aiStatus: string; aiScore: string | null; overridden: boolean; criterionId: string };
   name: string;
   competency: string;
   weight: string;
@@ -23,7 +23,8 @@ type Data = {
   transcript: { timestampPrecision: string; format: string } | null;
   segments: Seg[];
   participants: Part[];
-  evaluation: { id: string; overallScore: string | null; classification: string | null; coverage: string | null; provider: string; model: string; promptVersion: string; completedAt: string | null } | null;
+  pendingApproval: boolean;
+  evaluation: { id: string; overallScore: string | null; classification: string | null; coverage: string | null; provider: string; model: string; promptVersion: string; completedAt: string | null; reviewStatus: string } | null;
   latestEvaluation: { status: string; error: string | null } | null;
   history: { id: string; status: string; overallScore: string | null; createdAt: string; isCurrent: boolean }[];
   scorecard: {
@@ -41,12 +42,31 @@ type Data = {
       suggestedQuestions: string[];
       coachingRecommendations: string[];
     } | null;
+    review: {
+      overrides: { id: string; action: string; reason: string | null; actorName: string; createdAt: string; before: unknown; after: unknown }[];
+      comments: { id: string; body: string; authorName: string; createdAt: string }[];
+    };
   } | null;
 };
 
 const ROLE: Record<string, string> = { seller: "Vendedor", customer: "Cliente", other: "Outro", unknown: "?" };
 
-export function ConversationView({ data, canReprocess, canDelete, canEditSpeakers }: { data: Data; canReprocess: boolean; canDelete: boolean; canEditSpeakers: boolean }) {
+export function ConversationView({
+  data,
+  canReprocess,
+  canDelete,
+  canEditSpeakers,
+  canReview,
+  ownerUserId,
+}: {
+  data: Data;
+  canReprocess: boolean;
+  canDelete: boolean;
+  canEditSpeakers: boolean;
+  canReview: boolean;
+  ownerUserId: string;
+}) {
+  const [editing, setEditing] = useState<string | null>(null);
   const router = useRouter();
   const [active, setActive] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -142,6 +162,7 @@ export function ConversationView({ data, canReprocess, canDelete, canEditSpeaker
         </Alert>
       )}
       {c.status === "evaluating" && <Alert tone="info">Avaliando a conversa… esta página atualiza sozinha.</Alert>}
+      {data.pendingApproval && <Alert tone="info">A avaliação está concluída e aguarda a aprovação do gestor para ser exibida.</Alert>}
       {c.status === "failed" && <Alert tone="error">{c.statusDetail ?? "A avaliação não pôde ser concluída."}</Alert>}
       {c.status === "transcribed" && c.statusDetail && <Alert tone="info">{c.statusDetail}</Alert>}
       {c.status === "needs_speaker_review" && (
@@ -206,15 +227,64 @@ export function ConversationView({ data, canReprocess, canDelete, canEditSpeaker
                           <div className="h-full bg-navy" style={{ width: `${pct}%` }} />
                         </div>
                       )}
+                      {row.s.overridden && (
+                        <p className="mt-1 text-xs text-muted">
+                          Ajustado pelo gestor · IA: {row.s.aiStatus === "scored" ? fmtScore(row.s.aiScore) : row.s.aiStatus === "not_applicable" ? "não aplicável" : "não avaliável"}
+                        </p>
+                      )}
                       {row.s.justification && <p className="mt-2 whitespace-pre-line text-sm text-ink/90">{row.s.justification}</p>}
+                      {canReview && data.evaluation && (
+                        <div className="mt-2 flex flex-wrap gap-3 text-xs">
+                          <button className="text-navy underline" onClick={() => setEditing(editing === row.s.id ? null : row.s.id)}>
+                            {editing === row.s.id ? "Cancelar ajuste" : "Ajustar ou contestar"}
+                          </button>
+                          <button
+                            className="text-navy underline"
+                            onClick={() => {
+                              const title = prompt("Ação de desenvolvimento para o vendedor:", `Desenvolver: ${row.name}`);
+                              if (!title) return;
+                              run(() => api("/coaching", { body: { userId: ownerUserId, title, evaluationId: data.evaluation!.id } }));
+                            }}
+                          >
+                            Criar ação de coaching
+                          </button>
+                        </div>
+                      )}
+                      {editing === row.s.id && data.evaluation && (
+                        <OverrideForm
+                          scaleMin={sc.rubric.scaleMin}
+                          scaleMax={sc.rubric.scaleMax}
+                          current={row.s}
+                          busy={busy}
+                          onSubmit={(body) =>
+                            run(async () => {
+                              await api(`/evaluations/${data.evaluation!.id}/criteria/${row.s.id}`, { method: "PATCH", body });
+                              setEditing(null);
+                            })
+                          }
+                        />
+                      )}
                       {ev.length > 0 && (
                         <ul className="mt-2 flex flex-col gap-1">
                           {ev.map((e) => (
-                            <li key={e.id}>
-                              <button onClick={() => jump(e.segmentId)} className="text-left text-sm text-navy hover:underline">
+                            <li key={e.id} className="flex flex-wrap items-baseline gap-2">
+                              <button onClick={() => jump(e.segmentId)} className={`text-left text-sm hover:underline ${e.flaggedFalsePositive ? "text-muted line-through" : "text-navy"}`}>
                                 <span className="mr-1 rounded bg-surface px-1.5 text-xs tabular-nums">{approx ? "~" : ""}{fmtTime(e.startMs ?? 0)}</span>
                                 “{e.quote}”
                               </button>
+                              {e.flaggedFalsePositive && <Badge tone="warning">Falso positivo</Badge>}
+                              {canReview && data.evaluation && (
+                                <button
+                                  className="text-xs text-muted underline"
+                                  onClick={() => {
+                                    const reason = prompt(e.flaggedFalsePositive ? "Motivo para remover a marcação:" : "Por que esta evidência não sustenta o critério?");
+                                    if (!reason) return;
+                                    run(() => api(`/evaluations/${data.evaluation!.id}/evidence/${e.id}`, { method: "PATCH", body: { falsePositive: !e.flaggedFalsePositive, reason } }));
+                                  }}
+                                >
+                                  {e.flaggedFalsePositive ? "Desfazer" : "Falso positivo"}
+                                </button>
+                              )}
                             </li>
                           ))}
                         </ul>
@@ -272,6 +342,17 @@ export function ConversationView({ data, canReprocess, canDelete, canEditSpeaker
                 )}
               </div>
             </Card>
+          )}
+
+          {sc && data.evaluation && (canReview || sc.review.comments.length > 0) && (
+            <ReviewPanel
+              evaluationId={data.evaluation.id}
+              reviewStatus={data.evaluation.reviewStatus}
+              review={sc.review}
+              canReview={canReview}
+              busy={busy}
+              run={run}
+            />
           )}
 
           {data.history.length > 1 && (
@@ -362,6 +443,167 @@ function SpeakerReview({ participants, editable, busy, onSave }: { participants:
               Confirmar e avaliar
             </Button>
           </div>
+        )}
+      </div>
+    </Card>
+  );
+}
+
+const REVIEW_LABEL: Record<string, { label: string; tone: "neutral" | "success" | "warning" | "brand" }> = {
+  pending: { label: "Aguardando revisão", tone: "neutral" },
+  in_review: { label: "Em revisão", tone: "brand" },
+  approved: { label: "Aprovada", tone: "success" },
+  contested: { label: "Contestada", tone: "warning" },
+};
+const ACTION_LABEL: Record<string, string> = {
+  score_change: "Nota ajustada",
+  status_change: "Situação do critério alterada",
+  contest: "Critério contestado",
+  false_positive: "Evidência marcada",
+  approve: "Avaliação aprovada",
+  evidence_correction: "Evidência corrigida",
+  reprocess: "Reavaliação",
+  speaker_correction: "Falantes corrigidos",
+};
+
+function OverrideForm({
+  scaleMin,
+  scaleMax,
+  current,
+  busy,
+  onSubmit,
+}: {
+  scaleMin: number;
+  scaleMax: number;
+  current: { status: string; score: string | null };
+  busy: boolean;
+  onSubmit: (b: { status: string; score: number | null; reason: string; contest: boolean }) => void;
+}) {
+  const [status, setStatus] = useState(current.status);
+  const [score, setScore] = useState(current.score === null ? "" : String(Number(current.score)));
+  const [reason, setReason] = useState("");
+  const [contest, setContest] = useState(false);
+  return (
+    <form
+      className="mt-3 flex flex-col gap-3 rounded-md border border-line bg-surface p-3"
+      onSubmit={(e) => {
+        e.preventDefault();
+        onSubmit({ status, score: status === "scored" ? Number(score.replace(",", ".")) : null, reason, contest });
+      }}
+    >
+      <div className="grid gap-3 sm:grid-cols-2">
+        <label className="flex flex-col gap-1 text-xs font-medium text-navy">
+          Situação
+          <Select value={status} onChange={(e) => setStatus(e.target.value)}>
+            <option value="scored">Pontuado</option>
+            <option value="not_applicable">Não aplicável</option>
+            <option value="not_evaluable">Não avaliável</option>
+          </Select>
+        </label>
+        {status === "scored" && (
+          <label className="flex flex-col gap-1 text-xs font-medium text-navy">
+            Nota ({scaleMin}–{scaleMax})
+            <input
+              className="rounded-md border border-line bg-white px-3 py-2 text-sm"
+              inputMode="decimal"
+              value={score}
+              onChange={(e) => setScore(e.target.value)}
+              required
+            />
+          </label>
+        )}
+      </div>
+      <label className="flex flex-col gap-1 text-xs font-medium text-navy">
+        Motivo (fica no histórico)
+        <textarea className="rounded-md border border-line bg-white px-3 py-2 text-sm" rows={2} value={reason} onChange={(e) => setReason(e.target.value)} required minLength={5} />
+      </label>
+      <label className="flex items-center gap-2 text-xs">
+        <input type="checkbox" checked={contest} onChange={(e) => setContest(e.target.checked)} /> Registrar como contestação da avaliação da IA
+      </label>
+      <div>
+        <Button type="submit" disabled={busy}>Salvar ajuste</Button>
+      </div>
+    </form>
+  );
+}
+
+function ReviewPanel({
+  evaluationId,
+  reviewStatus,
+  review,
+  canReview,
+  busy,
+  run,
+}: {
+  evaluationId: string;
+  reviewStatus: string;
+  review: NonNullable<Data["scorecard"]>["review"];
+  canReview: boolean;
+  busy: boolean;
+  run: (fn: () => Promise<unknown>) => Promise<void>;
+}) {
+  const [comment, setComment] = useState("");
+  const st = REVIEW_LABEL[reviewStatus] ?? REVIEW_LABEL.pending;
+  return (
+    <Card
+      title="Revisão do gestor"
+      actions={
+        <div className="flex items-center gap-2">
+          <Badge tone={st.tone}>{st.label}</Badge>
+          {canReview && reviewStatus !== "approved" && (
+            <Button disabled={busy} onClick={() => run(() => api(`/evaluations/${evaluationId}/approve`, { method: "POST" }))}>
+              Aprovar avaliação
+            </Button>
+          )}
+        </div>
+      }
+    >
+      <div className="flex flex-col gap-4 text-sm">
+        {review.comments.length > 0 && (
+          <ul className="flex flex-col gap-2">
+            {review.comments.map((c) => (
+              <li key={c.id} className="rounded-md bg-surface px-3 py-2">
+                <div className="text-xs text-muted">{c.authorName} · {new Date(c.createdAt).toLocaleString("pt-BR")}</div>
+                <p className="mt-0.5 whitespace-pre-line">{c.body}</p>
+              </li>
+            ))}
+          </ul>
+        )}
+        {canReview && (
+          <form
+            className="flex flex-col gap-2 sm:flex-row"
+            onSubmit={(e) => {
+              e.preventDefault();
+              run(async () => {
+                await api(`/evaluations/${evaluationId}/comments`, { body: { body: comment } });
+                setComment("");
+              });
+            }}
+          >
+            <textarea
+              aria-label="Comentário para o vendedor"
+              placeholder="Comentário para o vendedor"
+              className="min-h-[2.5rem] flex-1 rounded-md border border-line px-3 py-2 text-sm"
+              rows={1}
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              required
+            />
+            <Button type="submit" variant="secondary" disabled={busy}>Comentar</Button>
+          </form>
+        )}
+        {canReview && review.overrides.length > 0 && (
+          <details>
+            <summary className="cursor-pointer text-xs text-muted">Histórico de alterações ({review.overrides.length})</summary>
+            <ul className="mt-2 flex flex-col gap-1.5 text-xs">
+              {review.overrides.map((o) => (
+                <li key={o.id}>
+                  <span className="text-muted">{new Date(o.createdAt).toLocaleString("pt-BR")} · {o.actorName}:</span> {ACTION_LABEL[o.action] ?? o.action}
+                  {o.reason && <> — “{o.reason}”</>}
+                </li>
+              ))}
+            </ul>
+          </details>
         )}
       </div>
     </Card>

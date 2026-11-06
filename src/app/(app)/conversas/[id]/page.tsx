@@ -22,6 +22,8 @@ export default async function ConversationPage({ params }: { params: Promise<{ i
       canReprocess={can(ctx.role, "evaluation.reprocess")}
       canDelete={can(ctx.role, "conversation.delete")}
       canEditSpeakers={can(ctx.role, "conversation.view_all") || detail.conversation.ownerUserId === ctx.userId}
+      canReview={can(ctx.role, "evaluation.review")}
+      ownerUserId={detail.conversation.ownerUserId}
     />
   );
 }
