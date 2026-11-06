@@ -34,6 +34,10 @@ O acesso administrativo da plataforma (liberar planos) usa o papel dono, fora da
 
 ## 3. Pipeline de análise (Etapa C)
 
+> **Implementado com entrada por transcrição pronta** (Meet/Zoom/Teams), conforme [ADR 0007](adr/0007-entrada-por-transcricao.md):
+> `upload da transcrição → leitura e validação → identificação de falantes (ou revisão) → redação de PII → avaliação → validação → nota → gravação`.
+> As etapas de áudio abaixo (validate/extract_audio/transcribe) ficam para quando houver upload de áudio.
+
 ```
 upload ─▶ validate ─▶ extract_audio ─▶ transcribe ─▶ redact ─▶ role_mapping
                                                                    │

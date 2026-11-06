@@ -8,3 +8,4 @@
 | [0004](0004-filas-pg-boss.md) | Filas com pg-boss |
 | [0005](0005-ia-camada-de-provedores.md) | Camada de provedores de IA e avaliação em chamada única |
 | [0006](0006-hospedagem-vps-compose.md) | Hospedagem em VPS com Docker Compose |
+| [0007](0007-entrada-por-transcricao.md) | Entrada por transcrição pronta (Meet/Zoom/Teams) |

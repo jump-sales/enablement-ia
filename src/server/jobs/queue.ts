@@ -19,7 +19,8 @@ export async function getBoss(): Promise<Boss> {
   if (!g.__jumpBoss) {
     g.__jumpBoss = (async () => {
       const { PgBoss } = await import("pg-boss");
-      const boss = new PgBoss({ connectionString: process.env.DATABASE_URL, schema: "pgboss" });
+      // O schema "pgboss" é criado pelas migrations (papel dono); a aplicação não tem permissão de criar schemas.
+      const boss = new PgBoss({ connectionString: process.env.DATABASE_URL, schema: "pgboss", createSchema: false });
       boss.on("error", (err) => logger.error({ err: String(err) }, "pg-boss"));
       await boss.start();
       await boss.createQueue(QUEUES.evaluate, {

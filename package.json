@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "worker": "tsx --env-file=.env worker/index.ts",
+    "worker": "SERVICE_NAME=worker tsx --env-file=.env --tsconfig tsconfig.json worker/index.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx --env-file=.env scripts/migrate.ts",
     "typecheck": "tsc --noEmit",

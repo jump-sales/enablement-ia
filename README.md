@@ -2,7 +2,9 @@
 
 Plataforma SaaS B2B multiempresa que avalia ligações e videochamadas comerciais a partir de gravações, gera feedback fundamentado em evidências e acompanha a evolução de SDRs e Closers ao longo do tempo.
 
-> **Status:** Etapa B (Fundação) concluída e testada. Upload, transcrição e avaliação (Etapa C) são o próximo passo. Veja [docs/BACKLOG.md](docs/BACKLOG.md).
+> **Status:** Etapas B (Fundação) e C (Pipeline de análise) concluídas e testadas. A avaliação usa um **motor simulado** até a chave de IA ser configurada (`LLM_PROVIDER=anthropic` + `ANTHROPIC_API_KEY`). Veja [docs/BACKLOG.md](docs/BACKLOG.md).
+
+Fluxo: o vendedor ou o gestor envia a **transcrição** que o Meet, o Zoom ou o Teams já geram → o sistema identifica quem é o vendedor → avalia pela metodologia da empresa → mostra a nota, as evidências com horário e o feedback.
 
 ## Produtos
 
@@ -15,7 +17,7 @@ Plataforma SaaS B2B multiempresa que avalia ligações e videochamadas comerciai
 
 - **Next.js 16 + TypeScript** (UI e API REST `/api/v1`), **Tailwind CSS 4**
 - **PostgreSQL 16** com **Row-Level Security** para isolamento entre empresas
-- **Drizzle ORM** · **Better Auth** (e-mail e senha, self-hosted) · **pg-boss** (filas, a partir da Etapa C)
+- **Drizzle ORM** · **Better Auth** (e-mail e senha, self-hosted) · **pg-boss** (filas)
 - Storage de mídia: disco local (VPS) ou S3-compatível (Cloudflare R2/MinIO)
 - IA atrás de interfaces substituíveis (transcrição e LLM); provedores simulados para desenvolvimento
 
@@ -23,7 +25,7 @@ Justificativas em [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) e [docs/adr/](doc
 
 ## Rodando localmente
 
-Pré-requisitos: Node 22+, PostgreSQL 16, ffmpeg (a partir da Etapa C).
+Pré-requisitos: Node 22+ e PostgreSQL 16.
 
 ```bash
 npm install
@@ -39,6 +41,12 @@ psql -U postgres -v owner_pw=SENHA_DONO -v app_pw=SENHA_APP -v dbname=jump -f sc
 ```bash
 npm run db:migrate              # aplica schema + políticas RLS
 npm run dev                     # http://localhost:3000
+```
+
+Em outro terminal, o worker que processa as avaliações:
+
+```bash
+npm run worker
 ```
 
 Acesse `/cadastro` para criar a primeira empresa. Para liberar plano e créditos (operação Jump, sem gateway de pagamento no MVP):
@@ -75,6 +83,7 @@ Variáveis opcionais: `TEST_DATABASE_OWNER_URL`, `TEST_DATABASE_URL`.
 | [docs/API.md](docs/API.md) | Contratos da API v1 |
 | [docs/SECURITY_LGPD.md](docs/SECURITY_LGPD.md) | Segurança, privacidade e pontos para validação jurídica |
 | [docs/DEPLOY.md](docs/DEPLOY.md) | Plano de deploy em VPS (Hostinger ou similar) |
+| [docs/INTEGRACAO_GOOGLE_DRIVE.md](docs/INTEGRACAO_GOOGLE_DRIVE.md) | Plano de importação do Google Drive |
 | [docs/BACKLOG.md](docs/BACKLOG.md) | Backlog priorizado e estado de cada etapa |
 | [docs/adr/](docs/adr/) | Registro de decisões arquiteturais |
 

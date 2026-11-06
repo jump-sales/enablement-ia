@@ -7,8 +7,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const ctx = await pageContext();
   const items: NavItem[] = [
     { href: "/painel", label: "Painel" },
-    { href: "/conversas", label: "Conversas", soon: true },
-    { href: "/metodologias", label: "Metodologias", soon: true },
+    { href: "/conversas", label: "Conversas" },
+    { href: "/metodologias", label: "Metodologias" },
     ...(can(ctx.role, "members.view") ? [{ href: "/equipe", label: "Equipe" }] : []),
     ...(can(ctx.role, "usage.view") ? [{ href: "/configuracoes", label: "Empresa e consumo" }] : []),
   ];

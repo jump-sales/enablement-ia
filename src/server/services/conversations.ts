@@ -74,7 +74,11 @@ export function guessRoles(parsed: ParsedTranscript, sellerName: string) {
     };
   }
   if (scored.length === 0) return { needsReview: false, roles: [] };
-  const top = [...scored].sort((a, b) => b.questions - a.questions)[0];
+  // Sugestão (sempre revisada por uma pessoa): quem abre a conversa costuma ser o vendedor;
+  // perguntas feitas também pesam.
+  const opener = parsed.segments.find((s) => s.speaker)?.speaker;
+  const rank = (s: (typeof scored)[number]) => s.questions + (s.speaker === opener ? 3 : 0);
+  const top = [...scored].sort((a, b) => rank(b) - rank(a))[0];
   return {
     needsReview: true,
     roles: scored.map((s) => ({ speaker: s.speaker, role: s.speaker === top.speaker ? ("seller" as const) : ("customer" as const), confidence: 0.5 })),

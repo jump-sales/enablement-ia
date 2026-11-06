@@ -43,18 +43,24 @@ Base: `/api/v1`. JSON em UTF-8. Autenticação por cookie de sessão (Better Aut
 | `POST /invitations/accept` | sessão | `{token}`; o e-mail da sessão precisa ser o convidado |
 | `GET /media/local?key&exp&sig` | URL assinada | entrega de mídia (driver local), expira em `MEDIA_URL_TTL_SECONDS` |
 
-## Planejado (Etapas C e D)
+## Implementado (Etapa C)
+
+| Método e rota | Permissão | Corpo → Resposta |
+|---|---|---|
+| `GET /methodologies` | membro | `{rubrics[] (versão vigente + critérios), templates[]}` |
+| `POST /methodologies` | `methodology.manage` | `{template}` → cria metodologia + rubrica v1 publicada |
+| `POST /conversations` | `conversation.upload` (outro vendedor: `upload_for_others`) | `multipart/form-data`: `file`, `title`, `type`, `ownerUserId`, `rubricId`, `occurredAt?`, `legalBasis`, `participantsNotified` → `{id, evaluationId, needsReview, warnings[]}`. Erros: `invalid_transcript`, `duplicate`, `too_short`, `too_long`, `no_credits` |
+| `GET /conversations` | membro (RLS: vendedor só as próprias) | `{conversations[]}` com nota vigente |
+| `GET /conversations/:id` | idem | conversa, segmentos, participantes, avaliação vigente, scorecard, evidências, feedback, histórico |
+| `PUT /conversations/:id/speakers` | gestor ou dono | `{roles: [{participantId, role}]}`; dispara a avaliação se estava aguardando |
+| `POST /conversations/:id/reprocess` | `evaluation.reprocess` | nova avaliação (a anterior fica no histórico) |
+| `DELETE /conversations/:id` | `conversation.delete` | exclusão definitiva (arquivo + transcrição + avaliações), auditada |
+
+## Planejado (Etapa D e integrações)
 
 | Método e rota | Descrição |
 |---|---|
-| `POST /conversations` | Cria a conversa (`title`, `type`, `ownerUserId`, `occurredAt`, `legalBasis`, `participantsNotified`) e devolve o destino de upload |
-| `PUT /conversations/:id/upload` | Upload em streaming (local) ou URL pré-assinada multipart (S3/R2) |
-| `POST /conversations/:id/process` | Enfileira o pipeline (idempotente) |
-| `GET /conversations?owner&team&status&from&to` | Lista; o RLS restringe o vendedor às próprias |
-| `GET /conversations/:id` | Detalhe + status do pipeline + URL temporária do áudio |
-| `GET /conversations/:id/transcript` | Segmentos com timestamps e falantes |
-| `PATCH /conversations/:id/participants/:pid` | Correção manual de falante (auditada) |
-| `DELETE /conversations/:id` | Exclusão (mídia + transcrição + avaliação) |
+| `POST /integrations/google-drive/import` | Importa arquivos escolhidos no seletor do Google Drive |
 | `GET /evaluations/:id` | Scorecard, evidências, feedback, histórico de revisão |
 | `PATCH /evaluations/:id/criteria/:cid` | Ajuste humano de nota/status, com motivo |
 | `POST /evaluations/:id/evidence/:eid/false-positive` | Marca falso positivo |

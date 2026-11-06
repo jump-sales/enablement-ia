@@ -71,15 +71,8 @@ export type EvaluationOutput = z.infer<typeof evaluationOutputSchema>;
 /* ------------------------------- Prompt -------------------------------- */
 const ROLE_LABEL: Record<string, string> = { seller: "VENDEDOR", customer: "CLIENTE", other: "OUTRO", unknown: "DESCONHECIDO" };
 
-export const fmtTime = (ms: number) => {
-  const s = Math.floor(ms / 1000);
-  const h = Math.floor(s / 3600);
-  const m = Math.floor((s % 3600) / 60);
-  const sec = s % 60;
-  const mm = String(m).padStart(2, "0");
-  const ss = String(sec).padStart(2, "0");
-  return h ? `${h}:${mm}:${ss}` : `${mm}:${ss}`;
-};
+export { fmtTime } from "./format";
+import { fmtTime } from "./format";
 
 /** Neutraliza tentativas de fechar o bloco de dados ou simular marcações de sistema. */
 export function neutralize(text: string) {

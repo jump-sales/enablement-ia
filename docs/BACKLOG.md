@@ -17,20 +17,25 @@ Legenda: ✅ feito e testado · 🔜 próxima · ⏳ planejado
 - ✅ Dockerfile, Compose e Caddy para VPS (não executados: sem Docker no ambiente de dev)
 - ✅ 32 testes de integração com Postgres real + fluxo ponta a ponta no navegador
 
-## Etapa C — Pipeline de análise 🔜
+## Etapa C — Pipeline de análise ✅ (com motor simulado)
 
-1. 🔜 Worker pg-boss (filas, `singletonKey`, retentativas com backoff, estados)
-2. 🔜 Upload em streaming (até ~2 GB) com validação ffprobe (10 s a 2 h), hash e deduplicação
-3. 🔜 Extração de áudio (ffmpeg → mono 16 kHz)
-4. 🔜 Interface `TranscriptionProvider`: simulado + 1 provedor real (escolher entre AssemblyAI e Deepgram por qualidade de diarização em pt-BR; requer chave de API)
-5. 🔜 Redação de PII
-6. 🔜 Mapeamento de falantes + correção manual
-7. 🔜 Interface `LLMProvider`: simulado + Claude (structured outputs)
-8. 🔜 Avaliação em chamada única + validação de evidências + scoring determinístico
-9. 🔜 Relatório de feedback; tela da conversa com player e transcrição sincronizada
-10. 🔜 `usage_events` com custo por etapa
-11. 🔜 Dados sintéticos: 10 a 15 transcrições de vendas fictícias (SDR e Closer, boas e ruins) + suíte de prompt injection
-12. 🔜 Exclusão de conversa e job de retenção
+Mudança de rumo: entrada pela **transcrição pronta** do Meet/Zoom/Teams ([ADR 0007](adr/0007-entrada-por-transcricao.md)).
+
+- ✅ Leitura de .vtt (Zoom/Teams), .srt, documento do Meet (.txt/.docx) e texto simples; horários estimados sinalizados
+- ✅ Validação: formato, tamanho (5 MB), duração (10 s a 2 h), duplicidade por hash
+- ✅ Identificação do vendedor pelo nome; sugestão + confirmação quando não reconhece
+- ✅ Redação de PII (e-mail, CPF/CNPJ válidos, telefone, cartão) antes do modelo; original preservado para o gestor
+- ✅ Templates: Qualificação SDR, Discovery Closer, SPIN, Challenger, Consultiva (versão 1 publicada e imutável)
+- ✅ Motor de avaliação em chamada única (Claude, saída estruturada, fallback em recusa, cache do bloco fixo) + motor simulado
+- ✅ Validação de evidências contra a transcrição; nota calculada em código; "não avaliável" não vira zero; cobertura mínima
+- ✅ Fila pg-boss + worker: idempotência, retentativa com backoff, estorno do crédito em falha definitiva, varredura de pendentes
+- ✅ Custo por chamada em `usage_events`
+- ✅ Telas: lista de conversas, envio, detalhe com scorecard, evidências clicáveis, feedback, perguntas sugeridas separadas, revisão de falantes, reavaliação, exclusão, histórico
+- ✅ Transcrições sintéticas (inclui caso de prompt injection e dados pessoais fictícios)
+- 🔜 **Configurar a chave da Anthropic** e repetir a suíte com o modelo real (concordância, estabilidade, injection)
+- 🔜 Importação do Google Drive, opção A ([INTEGRACAO_GOOGLE_DRIVE.md](INTEGRACAO_GOOGLE_DRIVE.md)): depende do projeto Google Cloud da Jump
+- ⏳ Job de retenção automática (apagar após N dias)
+- ⏳ Upload de áudio/vídeo + transcrição própria (só para clientes sem transcrição da plataforma)
 
 ## Etapa D — Gestão ⏳
 
@@ -67,8 +72,9 @@ Legenda: ✅ feito e testado · 🔜 próxima · ⏳ planejado
 | # | Decisão | Recomendação | Bloqueia |
 |---|---|---|---|
 | 1 | Repositório GitHub para versionar o código | Criar repositório privado e conectar à sessão | Persistência do trabalho |
-| 2 | Provedor de transcrição | Testar AssemblyAI e Deepgram com 3 gravações reais autorizadas; escolher por diarização em pt-BR | Etapa C (item 4) |
-| 3 | Chaves de API (STT e Anthropic) | Contas da Jump, com limite de gasto configurado | Testes com provedores reais |
-| 4 | Créditos por pacote (Avaliador: 50; Treinamento: 200/mês) e preço | Validar com o comercial | Configuração dos planos |
+| 2 | ~~Provedor de transcrição~~ | Resolvido: usar a transcrição do Meet/Zoom/Teams (ADR 0007) | — |
+| 3 | Chave da Anthropic (avaliação) | Conta da Jump com limite de gasto mensal configurado no console | Avaliações reais |
+| 4 | ~~Créditos por pacote~~ | Aprovado para começar: Avaliador 50; Treinamento 200/mês | — |
+| 4b | Projeto Google Cloud para o Drive | Opção A (seletor + `drive.file`) | Importação do Drive |
 | 5 | Modelo de avaliação padrão (Opus 5.5 vs. Sonnet 5.5) | Medir os dois no conjunto sintético e escolher pela concordância/custo | Etapa E |
 | 6 | Bases legais e textos de transparência | Validação jurídica | Operação real |

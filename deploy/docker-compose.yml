@@ -36,6 +36,20 @@ services:
     volumes:
       - media:/app/var/storage
 
+  worker:
+    build: { context: .., target: ops }
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: postgres://jump_app:${JUMP_APP_PASSWORD}@db:5432/jump
+      NODE_ENV: production
+      SERVICE_NAME: worker
+    command: ["npx", "tsx", "--tsconfig", "tsconfig.json", "worker/index.ts"]
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+    volumes:
+      - media:/app/var/storage
+
   caddy:
     image: caddy:2
     restart: unless-stopped

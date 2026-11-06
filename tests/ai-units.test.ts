@@ -186,3 +186,19 @@ describe("custo estimado", () => {
     expect(estimateCostMicros("desconhecido", { inputTokens: 1, outputTokens: 1, cacheReadTokens: 0, cacheWriteTokens: 0 })).toBe(0);
   });
 });
+
+describe("sugestão de papéis dos falantes", async () => {
+  const { guessRoles } = await import("@/server/services/conversations");
+  it("reconhece o vendedor pelo nome cadastrado", async () => {
+    const t = await parseTranscriptFile("a.vtt", fx("sdr-boa-zoom.vtt"));
+    const g = guessRoles(t, "Bruno Lima");
+    expect(g.needsReview).toBe(false);
+    expect(g.roles.find((r) => r.role === "seller")?.speaker).toBe("Bruno Lima");
+  });
+  it("sem nome correspondente, sugere quem abriu a conversa e pede revisão", async () => {
+    const t = await parseTranscriptFile("m.txt", fx("closer-fraca-meet.txt"));
+    const g = guessRoles(t, "Outra Pessoa");
+    expect(g.needsReview).toBe(true);
+    expect(g.roles.find((r) => r.role === "seller")?.speaker).toBe("Diana Rocha");
+  });
+});
