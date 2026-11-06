@@ -45,12 +45,15 @@ export const conversationStatus = pgEnum("conversation_status", [
   "extracting_audio",
   "transcribing",
   "transcribed",
+  "needs_speaker_review",
   "evaluating",
   "evaluated",
   "failed",
 ]);
 export const legalBasis = pgEnum("legal_basis", ["consent", "legitimate_interest", "contract", "other"]);
-export const mediaKind = pgEnum("media_kind", ["original", "audio"]);
+export const mediaKind = pgEnum("media_kind", ["original", "audio", "transcript"]);
+export const conversationSource = pgEnum("conversation_source", ["transcript_upload", "media_upload", "google_drive"]);
+export const timestampPrecision = pgEnum("timestamp_precision", ["exact", "approximate", "none"]);
 export const mediaStatus = pgEnum("media_status", ["pending_upload", "uploaded", "valid", "invalid", "deleted"]);
 export const speakerRole = pgEnum("speaker_role", ["seller", "customer", "other", "unknown"]);
 export const assignedBy = pgEnum("assigned_by", ["auto", "manual"]);
@@ -328,6 +331,11 @@ export const conversations = pgTable(
     uploadedBy: text("uploaded_by").notNull().references(() => user.id),
     title: text("title").notNull(),
     type: conversationType("type").notNull().default("other"),
+    source: conversationSource("source").notNull().default("transcript_upload"),
+    /** ID externo (ex.: arquivo do Google Drive) — evita importar duas vezes. */
+    externalRef: text("external_ref"),
+    /** Rubrica escolhida no envio; a versão exata fica registrada em cada avaliação. */
+    rubricId: uuid("rubric_id").references(() => rubrics.id, { onDelete: "set null" }),
     occurredAt: timestamp("occurred_at", { withTimezone: true }),
     language: text("language"),
     durationMs: integer("duration_ms"),
@@ -342,6 +350,7 @@ export const conversations = pgTable(
   },
   (t) => [
     index("conversations_org_owner_idx").on(t.organizationId, t.ownerUserId),
+    index("conversations_org_external_idx").on(t.organizationId, t.externalRef),
     index("conversations_org_created_idx").on(t.organizationId, t.createdAt),
   ],
 );
@@ -413,6 +422,8 @@ export const transcripts = pgTable(
     language: text("language"),
     status: processingStatus("status").notNull().default("queued"),
     isCurrent: boolean("is_current").notNull().default(true),
+    /** Transcrições do Meet trazem marcações a cada poucos minutos: tempos por fala são estimados. */
+    timestampPrecision: timestampPrecision("timestamp_precision").notNull().default("exact"),
     quality: jsonb("quality").$type<TranscriptQuality>(),
     attempts: integer("attempts").notNull().default(0),
     error: text("error"),

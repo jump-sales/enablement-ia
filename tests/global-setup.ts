@@ -6,7 +6,7 @@ import { TEST_OWNER_URL } from "./env";
 export default async function setup() {
   const c = new Client({ connectionString: TEST_OWNER_URL });
   await c.connect();
-  await c.query(`DROP SCHEMA IF EXISTS drizzle CASCADE; DROP SCHEMA IF EXISTS public CASCADE;
+  await c.query(`DROP SCHEMA IF EXISTS drizzle CASCADE; DROP SCHEMA IF EXISTS pgboss CASCADE; DROP SCHEMA IF EXISTS public CASCADE;
                  CREATE SCHEMA public; GRANT USAGE ON SCHEMA public TO jump_app;`);
   await c.end();
   await runMigrations(TEST_OWNER_URL);

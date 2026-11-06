@@ -15,6 +15,20 @@
       "when": 1793938417079,
       "tag": "0001_rls",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793939753928,
+      "tag": "0002_transcript_input",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1793939765193,
+      "tag": "0003_queue_schema",
+      "breakpoints": true
     }
   ]
 }
