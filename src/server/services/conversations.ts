@@ -27,6 +27,7 @@ import { PROMPT_VERSION } from "../ai/evaluation";
 import { audit } from "../audit";
 import { AppError, assertCan, badRequest, can, conflict, forbidden, notFound } from "../authz";
 import { queue } from "../jobs/queue";
+import { reviewHistory } from "./reviews";
 import { mediaKey, tenantStorage } from "../storage";
 import { withTenant } from "../tenancy";
 import { parseTranscriptFile, TranscriptParseError, type ParsedTranscript } from "../transcripts/parse";
@@ -343,11 +344,19 @@ export async function listConversations(ctx: ServiceCtx) {
     const ids = rows.map((r) => r.id);
     const evs = ids.length
       ? await tx
-          .select({ conversationId: evaluations.conversationId, overallScore: evaluations.overallScore, classification: evaluations.classification, provider: evaluations.provider })
+          .select({ conversationId: evaluations.conversationId, overallScore: evaluations.overallScore, classification: evaluations.classification, provider: evaluations.provider, reviewStatus: evaluations.reviewStatus })
           .from(evaluations)
           .where(and(inArray(evaluations.conversationId, ids), eq(evaluations.isCurrent, true)))
       : [];
-    return rows.map((r) => ({ ...r, evaluation: evs.find((e) => e.conversationId === r.id) ?? null }));
+    const [org] = await tx.select({ settings: organizations.settings }).from(organizations).where(eq(organizations.id, ctx.orgId));
+    const hideUnapproved = org.settings.requireApprovalBeforeRepVisibility && !can(ctx.role, "evaluation.review");
+    return rows.map((r) => {
+      const ev = evs.find((e) => e.conversationId === r.id) ?? null;
+      if (ev && hideUnapproved && ev.reviewStatus !== "approved") {
+        return { ...r, evaluation: { ...ev, overallScore: null, classification: "Aguardando aprovação" } };
+      }
+      return { ...r, evaluation: ev };
+    });
   });
 }
 
@@ -386,16 +395,26 @@ export async function getConversationDetail(ctx: ServiceCtx, id: string) {
         .orderBy(asc(criteria.position));
       const evidence = await tx.select().from(evidenceReferences).where(eq(evidenceReferences.evaluationId, current.id));
       const [feedback] = await tx.select().from(feedbackReports).where(eq(feedbackReports.evaluationId, current.id));
-      scorecard = { rubric: rv, scores, evidence, feedback: feedback ?? null };
+      scorecard = { rubric: rv, scores, evidence, feedback: feedback ?? null, review: await reviewHistory(tx, current.id) };
+    }
+    // Política da empresa: o vendedor só vê a avaliação depois da aprovação do gestor.
+    let pendingApproval = false;
+    if (current && !can(ctx.role, "evaluation.review")) {
+      const [org] = await tx.select({ settings: organizations.settings }).from(organizations).where(eq(organizations.id, ctx.orgId));
+      if (org.settings.requireApprovalBeforeRepVisibility && current.reviewStatus !== "approved") {
+        pendingApproval = true;
+        scorecard = null;
+      }
     }
     return {
+      pendingApproval,
       conversation: { ...conv.c, ownerName: conv.ownerName },
       transcript: tr ? { id: tr.id, format: tr.provider, timestampPrecision: tr.timestampPrecision, quality: tr.quality } : null,
       segments: segs,
       participants: parts,
-      evaluation: current,
+      evaluation: pendingApproval && current ? { ...current, overallScore: null, classification: null, coverage: null } : current,
       latestEvaluation: latest,
-      history: evs.map((e) => ({ id: e.id, status: e.status, overallScore: e.overallScore, classification: e.classification, createdAt: e.createdAt, isCurrent: e.isCurrent, model: e.model, error: e.error })),
+      history: evs.map((e) => ({ id: e.id, status: e.status, overallScore: pendingApproval ? null : e.overallScore, classification: e.classification, createdAt: e.createdAt, isCurrent: e.isCurrent, model: e.model, error: e.error })),
       scorecard,
     };
   });

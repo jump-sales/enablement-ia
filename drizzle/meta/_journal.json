@@ -36,6 +36,20 @@
       "when": 1793963053797,
       "tag": "0004_worker_sweep",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1793976077554,
+      "tag": "0005_rubric_immutability",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793976166698,
+      "tag": "0006_coaching_policies",
+      "breakpoints": true
     }
   ]
 }
