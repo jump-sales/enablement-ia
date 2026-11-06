@@ -9,6 +9,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     { href: "/painel", label: "Painel" },
     { href: "/conversas", label: "Conversas" },
     { href: "/metodologias", label: "Metodologias" },
+    ...(can(ctx.role, "calibration.manage") ? [{ href: "/calibracao", label: "Calibração" }] : []),
     ...(can(ctx.role, "members.view") ? [{ href: "/equipe", label: "Equipe" }] : []),
     ...(can(ctx.role, "usage.view") ? [{ href: "/configuracoes", label: "Empresa e consumo" }] : []),
   ];
