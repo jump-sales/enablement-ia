@@ -36,7 +36,13 @@ export function driveConfig() {
 type Fetch = typeof fetch;
 
 async function call(fetchImpl: Fetch, url: string, token: string) {
-  const res = await fetchImpl(url, { headers: { Authorization: `Bearer ${token}` }, signal: AbortSignal.timeout(30_000) });
+  let res: Response;
+  try {
+    res = await fetchImpl(url, { headers: { Authorization: `Bearer ${token}` }, signal: AbortSignal.timeout(30_000) });
+  } catch {
+    // Falha de rede ou tempo esgotado: erro tratável, por arquivo (não derruba a importação).
+    throw new DriveError("Não foi possível falar com o Google Drive agora. Tente novamente em instantes.", "google_error");
+  }
   if (res.status === 401) throw new DriveError("A autorização do Google expirou. Clique em “Escolher no Google Drive” de novo.", "token_expired");
   if (res.status === 403 || res.status === 404) throw new DriveError("Sem acesso a este arquivo. Selecione-o novamente pelo seletor do Google.", "no_access");
   if (!res.ok) throw new DriveError("O Google Drive não respondeu como esperado. Tente novamente.", "google_error");

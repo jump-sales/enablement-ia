@@ -33,7 +33,7 @@ Mudança de rumo: entrada pela **transcrição pronta** do Meet/Zoom/Teams ([ADR
 - ✅ Telas: lista de conversas, envio, detalhe com scorecard, evidências clicáveis, feedback, perguntas sugeridas separadas, revisão de falantes, reavaliação, exclusão, histórico
 - ✅ Transcrições sintéticas (inclui caso de prompt injection e dados pessoais fictícios)
 - 🔜 **Configurar a chave da Anthropic** e repetir a suíte com o modelo real (concordância, estabilidade, injection)
-- 🔜 Importação do Google Drive, opção A ([INTEGRACAO_GOOGLE_DRIVE.md](INTEGRACAO_GOOGLE_DRIVE.md)): depende do projeto Google Cloud da Jump
+- ✅ Importação do Google Drive, opção A (seletor + `drive.file`; testada com Google simulado) — 🔜 ativar com o projeto Google Cloud da Jump ([passo a passo](INTEGRACAO_GOOGLE_DRIVE.md))
 - ⏳ Job de retenção automática (apagar após N dias)
 - ⏳ Upload de áudio/vídeo + transcrição própria (só para clientes sem transcrição da plataforma)
 

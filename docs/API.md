@@ -73,11 +73,16 @@ Base: `/api/v1`. JSON em UTF-8. Autenticação por cookie de sessão (Better Aut
 | `GET/POST /calibration/:conversationId` | `calibration.manage` + plano Treinamento | formulário / envio da referência (`402 feature_not_in_plan` sem o plano) |
 | `GET/POST /coaching` · `PATCH /coaching/:id` | ver / `coaching.assign` / dono | ações de desenvolvimento |
 
+## Implementado (Google Drive)
+
+| Método e rota | Permissão | Descrição |
+|---|---|---|
+| `POST /integrations/google-drive/import` | `conversation.upload` (outro vendedor: `upload_for_others`) | `{accessToken, items: [{fileId, title, type, ownerUserId, rubricId, occurredAt?, legalBasis, participantsNotified}]}` (até 20) → `{results: [{fileId, ok, conversationId?, needsReview?, code?, message?}]}`. Erros por arquivo: `duplicate`, `unsupported`, `too_large`, `no_access`, `token_expired`, `google_error`. `503 drive_not_configured` sem as credenciais |
+
 ## Planejado (integrações)
 
 | Método e rota | Descrição |
 |---|---|
-| `POST /integrations/google-drive/import` | Importa arquivos escolhidos no seletor do Google Drive |
 | `GET /evaluations/:id` | Scorecard, evidências, feedback, histórico de revisão |
 | `PATCH /evaluations/:id/criteria/:cid` | Ajuste humano de nota/status, com motivo |
 | `POST /evaluations/:id/evidence/:eid/false-positive` | Marca falso positivo |

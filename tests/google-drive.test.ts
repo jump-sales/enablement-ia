@@ -37,7 +37,7 @@ const fakeGoogle: typeof fetch = async (input, init) => {
   if (id === NO_ACCESS || !files[id]) return new Response("{}", { status: 404 });
   const f = files[id];
   if (action === "export") return new Response(f.body as string, { status: 200 });
-  if (url.searchParams.get("alt") === "media") return new Response(f.body as Buffer, { status: 200 });
+  if (url.searchParams.get("alt") === "media") return new Response(new Uint8Array(f.body as Buffer), { status: 200 });
   return Response.json(f.meta);
 };
 
@@ -86,6 +86,10 @@ describe("leitura de arquivos do Google Drive", () => {
     await expect(fetchDriveFile("../../etc", TOKEN, fakeGoogle)).rejects.toMatchObject({ code: "invalid_id" });
     await expect(fetchDriveFile(NO_ACCESS, TOKEN, fakeGoogle)).rejects.toMatchObject({ code: "no_access" });
     await expect(fetchDriveFile(VTT_FILE, "token-expirado-xyz", fakeGoogle)).rejects.toBeInstanceOf(DriveError);
+    const offline: typeof fetch = async () => {
+      throw new TypeError("fetch failed");
+    };
+    await expect(fetchDriveFile(VTT_FILE, TOKEN, offline)).rejects.toMatchObject({ code: "google_error" });
   });
 });
 

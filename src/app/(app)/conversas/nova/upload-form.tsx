@@ -32,7 +32,7 @@ export function UploadForm({ sellers, rubrics, defaultSeller }: { sellers: Selle
   }
 
   return (
-    <Card>
+    <Card title="Enviar arquivo do computador">
       <form onSubmit={onSubmit} className="flex flex-col gap-4" encType="multipart/form-data">
         {error && <Alert tone="error">{error}</Alert>}
         <Field id="file" label="Arquivo da transcrição" hint="Formatos aceitos: .vtt, .srt, .txt ou .docx">
